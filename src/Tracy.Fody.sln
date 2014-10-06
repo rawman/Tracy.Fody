@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tracy.Fody", "Tracy.Fody\Tracy.Fody.csproj", "{2D69F03E-22A0-4EA9-A865-0F6C9178E877}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tracy.Fody.Tests", "Tracy.Fody.Tests\Tracy.Fody.Tests.csproj", "{9DEE6169-8582-45DA-B445-B40F45235C6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyToProcess", "AssemblyToProcess\AssemblyToProcess.csproj", "{2CE6BC10-18F5-47D4-9C73-5EC4C4E8F2FA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D69F03E-22A0-4EA9-A865-0F6C9178E877}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D69F03E-22A0-4EA9-A865-0F6C9178E877}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D69F03E-22A0-4EA9-A865-0F6C9178E877}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D69F03E-22A0-4EA9-A865-0F6C9178E877}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DEE6169-8582-45DA-B445-B40F45235C6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DEE6169-8582-45DA-B445-B40F45235C6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DEE6169-8582-45DA-B445-B40F45235C6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DEE6169-8582-45DA-B445-B40F45235C6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CE6BC10-18F5-47D4-9C73-5EC4C4E8F2FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CE6BC10-18F5-47D4-9C73-5EC4C4E8F2FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CE6BC10-18F5-47D4-9C73-5EC4C4E8F2FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CE6BC10-18F5-47D4-9C73-5EC4C4E8F2FA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
