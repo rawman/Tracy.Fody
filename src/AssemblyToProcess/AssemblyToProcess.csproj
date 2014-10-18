@@ -39,6 +39,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="A\Bar.cs" />
+    <Compile Include="A\Biz.cs" />
+    <Compile Include="FizBar.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="SampleClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

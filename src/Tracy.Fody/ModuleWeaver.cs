@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -66,15 +67,28 @@ namespace Tracy.Fody
 
             var definitions = new HashSet<MethodDefinition>();
 
-            definitions.UnionWith(
-                moduleDefinition.Types.SelectMany(x => x.Methods.Where(y => y.ContainsAttribute(LogCallAttributeName))));
-            definitions.UnionWith(
-                moduleDefinition.Types.Where(x => x.IsClass && x.ContainsAttribute(LogCallAttributeName))
-                    .SelectMany(x => x.Methods)
-                    .Where(x =>(!x.IsSpecialName && !x.IsGetter && !x.IsSetter && !x.IsConstructor &&
-                                !x.ContainsAttribute(moduleDefinition.ImportType<CompilerGeneratedAttribute>()))));
+            definitions.UnionWith(SelectMethods(moduleDefinition, x => true, x => x.ContainsAttribute(LogCallAttributeName)));
+            definitions.UnionWith(SelectMethods(moduleDefinition, x => x.ContainsAttribute(LogCallAttributeName), x => true));
+
+            var logCallAttribute = moduleDefinition.Assembly.FindAttribute(LogCallAttributeName);
+            if (logCallAttribute != null)
+            {
+                var includeTypes = logCallAttribute.GetPropertyValue<string>("IncludeTypes") ?? ".*";
+                var regex = new Regex(includeTypes);
+                definitions.UnionWith(SelectMethods(moduleDefinition, x => regex.IsMatch(x.FullName), x => true));
+            }
 
             return definitions;
+        }
+
+        private IEnumerable<MethodDefinition> SelectMethods(ModuleDefinition moduleDefinition,
+            Func<TypeDefinition, bool> typeSelector, Func<MethodDefinition, bool> methodSelector)
+        {
+            return moduleDefinition.Types.Where(x => x.IsClass && typeSelector(x))
+                .SelectMany(x => x.Methods)
+                .Where(x => (!x.IsSpecialName && !x.IsGetter && !x.IsSetter && !x.IsConstructor &&
+                             !x.ContainsAttribute(moduleDefinition.ImportType<CompilerGeneratedAttribute>())) &&
+                              methodSelector(x));
         }
 
         private void WeaveMethod(MethodDefinition methodDefinition)
@@ -153,9 +167,9 @@ namespace Tracy.Fody
             var logCallAttribute = methodDefinition.FindAttribute(LogCallAttributeName) ??
                                    methodDefinition.DeclaringType.FindAttribute(LogCallAttributeName);
 
-            if (logCallAttribute != null && logCallAttribute.Properties.Count > 0)
+            if (logCallAttribute != null)
             {
-                return (string)logCallAttribute.Properties[0].Argument.Value;
+                return logCallAttribute.GetPropertyValue<string>("LogAs") ?? DefaultLogMethod;
             }
             return DefaultLogMethod;
         }
