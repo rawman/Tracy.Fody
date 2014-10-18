@@ -113,13 +113,52 @@ namespace Tracy.Fody
                 return Enumerable.Empty<Instruction>();
             }
 
-            return new[]
+            var builder = new MethodBuilder(methodDefinition, processor);
+            var objectArrayVar = builder.AddVariable<object[]>();
+            builder.Add(OpCodes.Nop)
+                .Add(OpCodes.Ldarg_0) //todo: not needed when Logger is static 
+                .AddCall(propertyGet)
+                .Add(OpCodes.Ldstr, FormatMethodCall(methodDefinition));
+
+            if (methodDefinition.Parameters.Count > 0)
             {
-                processor.Create(OpCodes.Ldarg_0), //todo: not needed when Logger is static 
-                processor.Create(OpCodes.Call, methodDefinition.Module.Import(propertyGet)),
-                processor.Create(OpCodes.Ldstr, "Called " + methodDefinition.Name),
-                processor.Create(OpCodes.Callvirt, log)
-            }.ToList();
+                builder.Add(OpCodes.Ldc_I4, methodDefinition.Parameters.Count)
+                    .Add(OpCodes.Newarr, methodDefinition.Module.ImportType<object>())
+                    .Add(OpCodes.Stloc, objectArrayVar);
+
+                // Set object[] values
+                for (int i = 0; i < methodDefinition.Parameters.Count; i++)
+                {
+                    var parameterType = methodDefinition.Parameters[i].ParameterType;
+
+                    builder.Add(OpCodes.Ldloc, objectArrayVar)
+                        .Add(OpCodes.Ldc_I4, i)
+                        .Add(OpCodes.Ldarg, methodDefinition.IsStatic ? i : i + 1)
+                        .Add(parameterType.IsValueType ? new []{processor.Create(OpCodes.Box, parameterType)} : new Instruction[0])
+                        .Add(OpCodes.Stelem_Ref);
+                }
+
+                builder.Add(OpCodes.Ldloc, objectArrayVar)
+                    .AddCall((string x, object[] y) => String.Format(x, y));
+            }
+
+            builder.Add(OpCodes.Callvirt, log);
+
+            return builder.Instructions;
+        }
+
+        private string FormatMethodCall(MethodDefinition methodDefinition)
+        {
+            if (methodDefinition.Parameters.Count == 0)
+                return String.Format("Called {0}", methodDefinition.NoInlining);
+            else
+                return String.Format("Called {0} with {1}", methodDefinition.Name, FormatMethodParameters(methodDefinition));
+        }
+
+        private string FormatMethodParameters(MethodDefinition methodDefinition)
+        {
+            return string.Join(" ",
+                methodDefinition.Parameters.Select((x, i) => string.Format("{0}={{{1}}}", x.Name, i)));
         }
 
         private MethodDefinition GetLogMethod(TypeDefinition loggerType, string logMethod)

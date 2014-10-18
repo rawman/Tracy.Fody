@@ -1,7 +1,9 @@
-﻿using Tracy.Fody.Attributes;
+﻿using System;
+using Tracy.Fody.Attributes;
 
 namespace AssemblyToProcess
 {
+    [LogCall]
     public class SampleClass
     {
         public SampleClass()
@@ -11,10 +13,17 @@ namespace AssemblyToProcess
 
         public ILogger Logger { get; set; }
 
-        [LogCall]
+
         public void NoParameters()
         {
-            
+        }
+
+        public void OneParameters(int a)
+        {
+        }
+
+        public void TwoParameters(int a, string b)
+        {
         }
     }
 }
