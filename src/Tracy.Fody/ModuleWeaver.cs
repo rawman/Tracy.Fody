@@ -163,7 +163,7 @@ namespace Tracy.Fody
         private string FormatMethodCall(MethodDefinition methodDefinition)
         {
             if (methodDefinition.Parameters.Count == 0)
-                return String.Format("Called {0}", methodDefinition.NoInlining);
+                return String.Format("Called {0}", methodDefinition.Name);
             else
                 return String.Format("Called {0} with {1}", methodDefinition.Name, FormatMethodParameters(methodDefinition));
         }
