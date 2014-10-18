@@ -9,6 +9,8 @@ namespace AssemblyToProcess
         void LogTrace(string message);
 
         void LogDebug(string message);
+
+        void LogCustom(string message);
     }
 
     public class Logger : ILogger
@@ -26,6 +28,11 @@ namespace AssemblyToProcess
         public void LogDebug(string message)
         {
             Console.WriteLine("DEBUG:" + message);
+        }
+
+        public void LogCustom(string message)
+        {
+            Console.WriteLine("CUSTOM:" + message);
         }
     }
 }

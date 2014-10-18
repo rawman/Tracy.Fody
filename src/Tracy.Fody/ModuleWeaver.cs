@@ -12,6 +12,7 @@ namespace Tracy.Fody
     public class ModuleWeaver
     {
         public const string LogCallAttributeName = "LogCallAttribute";
+        public const string DefaultLogMethod = "LogInfo";
 
         public IAssemblyResolver AssemblyResolver { get; set; }
 
@@ -104,10 +105,10 @@ namespace Tracy.Fody
             }
 
             var propertyGetReturnTypeDefinition = propertyGet.ReturnType.Resolve();
-            var log = methodDefinition.Module.Import(
-                GetLogMethod(propertyGetReturnTypeDefinition, "LogInfo"));
+            var logMethodName = GetLogMethodName(methodDefinition);
+            var logMethod = methodDefinition.Module.Import(GetLogMethod(propertyGetReturnTypeDefinition, logMethodName));
 
-            if (log == null)
+            if (logMethod == null)
             {
                 LogError("Can not find log method ");
                 return Enumerable.Empty<Instruction>();
@@ -142,9 +143,21 @@ namespace Tracy.Fody
                     .AddCall((string x, object[] y) => String.Format(x, y));
             }
 
-            builder.Add(OpCodes.Callvirt, log);
+            builder.Add(OpCodes.Callvirt, logMethod);
 
             return builder.Instructions;
+        }
+
+        private static string GetLogMethodName(MethodDefinition methodDefinition)
+        {
+            var logCallAttribute = methodDefinition.FindAttribute(LogCallAttributeName) ??
+                                   methodDefinition.DeclaringType.FindAttribute(LogCallAttributeName);
+
+            if (logCallAttribute != null && logCallAttribute.Properties.Count > 0)
+            {
+                return (string)logCallAttribute.Properties[0].Argument.Value;
+            }
+            return DefaultLogMethod;
         }
 
         private string FormatMethodCall(MethodDefinition methodDefinition)

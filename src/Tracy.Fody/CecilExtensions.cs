@@ -90,6 +90,16 @@ namespace Tracy.Fody
             return typeDefinition.CustomAttributes.Any(x => x.Constructor.DeclaringType.Name == attributeTypeName);
         }
 
+        public static CustomAttribute FindAttribute(this MethodDefinition methodDefinition, string attributeTypeName)
+        {
+            return methodDefinition.CustomAttributes.FirstOrDefault(x => x.Constructor.DeclaringType.Name == attributeTypeName);
+        }
+
+        public static CustomAttribute FindAttribute(this TypeDefinition typeDefinition, string attributeTypeName)
+        {
+            return typeDefinition.CustomAttributes.FirstOrDefault(x => x.Constructor.DeclaringType.Name == attributeTypeName);
+        }
+
         public static MethodDefinition GetInheritedPropertyGet(this TypeDefinition baseType, string propertyName)
         {
             var methodDefinition = baseType.GetPropertyGet(propertyName);

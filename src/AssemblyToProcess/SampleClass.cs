@@ -14,6 +14,7 @@ namespace AssemblyToProcess
         public ILogger Logger { get; set; }
 
 
+        [LogCall(LogAs = LogLevel.Trace)]
         public void NoParameters()
         {
         }
@@ -23,6 +24,11 @@ namespace AssemblyToProcess
         }
 
         public void TwoParameters(int a, string b)
+        {
+        }
+
+        [LogCall(LogAs = "LogCustom")]
+        public void WithCustomLog()
         {
         }
     }
