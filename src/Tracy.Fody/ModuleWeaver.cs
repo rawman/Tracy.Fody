@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Mono.Cecil;
@@ -12,6 +13,7 @@ namespace Tracy.Fody
 {
     public class ModuleWeaver
     {
+        public const string LoggerInstanceName = "Logger";
         public const string LogCallAttributeName = "LogCallAttribute";
         public const string DefaultLogMethod = "LogInfo";
 
@@ -108,21 +110,66 @@ namespace Tracy.Fody
             methodDefinition.Body.OptimizeMacros();
         }
 
-        public IEnumerable<Instruction> WaveMethod(MethodDefinition methodDefinition, ILProcessor processor)
+        private LoggerAccessor FindLogger(MethodDefinition methodDefinition)
         {
-            var propertyGet = methodDefinition.DeclaringType.GetPropertyGet("Logger");
-            if (propertyGet == null)
+            var loggerProperty = methodDefinition.DeclaringType.GetPropertyGet(LoggerInstanceName);
+            if (loggerProperty != null)
+                return GetLoggerFromProperty(methodDefinition, loggerProperty);
+
+            var loggerFiled = methodDefinition.DeclaringType.GetField(LoggerInstanceName);
+            if (loggerFiled != null)
+                return GetLoggerFromField(methodDefinition, loggerFiled);
+
+            return null;
+        }
+
+        private LoggerAccessor GetLoggerFromField(MethodDefinition methodDefinition, FieldDefinition loggerFiled)
+        {
+            var fieldTypeDefinition = loggerFiled.FieldType.Resolve();
+            var logMethod = FindLogMethod(methodDefinition, fieldTypeDefinition);
+            if (logMethod == null)
             {
-                LogError("Can not find logger property");
-                //todo: try find public field
-                return Enumerable.Empty<Instruction>();
+                LogError("Can not find log method ");
+                return null;
             }
 
-            var propertyGetReturnTypeDefinition = propertyGet.ReturnType.Resolve();
-            var logMethodName = GetLogMethodName(methodDefinition);
-            var logMethod = methodDefinition.Module.Import(GetLogMethod(propertyGetReturnTypeDefinition, logMethodName));
+            var accessor = new LoggerAccessor
+            {
+                LoadLogger = x => x.Add(OpCodes.Ldfld, methodDefinition.Module.Import(loggerFiled)),
+                CallLogger = x => x.Add(OpCodes.Callvirt, logMethod),
+            };
+            return accessor;
+        }
 
+        private LoggerAccessor GetLoggerFromProperty(MethodDefinition methodDefinition, MethodDefinition loggerProperty)
+        {
+            var propertyGetReturnTypeDefinition = loggerProperty.ReturnType.Resolve();
+            var logMethod = FindLogMethod(methodDefinition, propertyGetReturnTypeDefinition);
             if (logMethod == null)
+            {
+                LogError("Can not find logger");
+                return null;
+            }
+
+            var accessor = new LoggerAccessor
+            {
+                LoadLogger = (x) => x.AddCall(loggerProperty),
+                CallLogger = (x) => x.Add(OpCodes.Callvirt, logMethod)
+            };
+            return accessor;
+        }
+
+        private MethodReference FindLogMethod(MethodDefinition methodDefinition, TypeDefinition loggerType)
+        {
+            var logMethodName = GetLogMethodName(methodDefinition);
+            var logMethod = (loggerType.GetMethod(logMethodName, new[] { loggerType.Module.ImportType<string>() }));
+            return methodDefinition.Module.Import(logMethod);
+        }
+
+        public IEnumerable<Instruction> WaveMethod(MethodDefinition methodDefinition, ILProcessor processor)
+        {
+            var loggerAccessor = FindLogger(methodDefinition);
+            if (loggerAccessor == null)
             {
                 LogError("Can not find log method ");
                 return Enumerable.Empty<Instruction>();
@@ -132,7 +179,7 @@ namespace Tracy.Fody
             var objectArrayVar = builder.AddVariable<object[]>();
             builder.Add(OpCodes.Nop)
                 .Add(OpCodes.Ldarg_0) //todo: not needed when Logger is static 
-                .AddCall(propertyGet)
+                .Apply(loggerAccessor.LoadLogger)
                 .Add(OpCodes.Ldstr, FormatMethodCall(methodDefinition));
 
             if (methodDefinition.Parameters.Count > 0)
@@ -157,7 +204,7 @@ namespace Tracy.Fody
                     .AddCall((string x, object[] y) => String.Format(x, y));
             }
 
-            builder.Add(OpCodes.Callvirt, logMethod);
+            builder.Apply(loggerAccessor.CallLogger);
 
             return builder.Instructions;
         }
@@ -188,9 +235,10 @@ namespace Tracy.Fody
                 methodDefinition.Parameters.Select((x, i) => string.Format("{0}={{{1}}}", x.Name, i)));
         }
 
-        private MethodDefinition GetLogMethod(TypeDefinition loggerType, string logMethod)
+        private class LoggerAccessor
         {
-            return (loggerType.GetMethod(logMethod, new[] { loggerType.Module.ImportType<string>() }));
+            public Func<MethodBuilder, MethodBuilder> LoadLogger;
+            public Func<MethodBuilder, MethodBuilder> CallLogger;
         }
     }
 }

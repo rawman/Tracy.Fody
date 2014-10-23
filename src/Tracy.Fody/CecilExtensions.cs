@@ -141,6 +141,11 @@ namespace Tracy.Fody
             return typeDefinition.Properties.Where(x => x.Name == propertyName).Select(x => x.GetMethod).SingleOrDefault();
         }
 
+        public static FieldDefinition GetField(this TypeDefinition typeDefinition, string fieldName)
+        {
+            return typeDefinition.Fields.FirstOrDefault(x => x.Name == fieldName);
+        }
+
         public static MethodReference ImportMethod<T>(this ModuleDefinition module, string methodName)
         {
             return module.ImportMethod(typeof(T), methodName);

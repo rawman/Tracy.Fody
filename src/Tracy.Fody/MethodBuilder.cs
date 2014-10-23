@@ -30,6 +30,11 @@ namespace Tracy.Fody
             return Add(_processor.Create(code, typeReference));
         }
 
+        public MethodBuilder Add(OpCode code, FieldReference fieldReference)
+        {
+            return Add(_processor.Create(code, fieldReference));
+        }
+
         public MethodBuilder Add(OpCode code)
         {
             return Add(_processor.Create(code));
@@ -84,6 +89,11 @@ namespace Tracy.Fody
         public int AddVariable<T>()
         {
             return _methodDefinition.AddVariable<T>();
+        }
+
+        public MethodBuilder Apply(Func<MethodBuilder, MethodBuilder> add)
+        {
+            return add(this);
         }
     }
 }
