@@ -52,11 +52,7 @@ namespace Tracy.Fody
 
         public void Execute()
         {
-            var typeDefinition = new TypeDefinition(GetType().Assembly.GetName().Name, "TypeInjectedBy" + GetType().Name, TypeAttributes.Public, ModuleDefinition.Import(typeof(object)));
-            ModuleDefinition.Types.Add(typeDefinition);
-
-            var methods = SelectMethods(ModuleDefinition).ToArray();
-            foreach (var method in methods)
+            foreach (var method in SelectMethods(ModuleDefinition).ToArray())
             {
                 LogWarning("Add call logging to method " + method.Name);
                 WeaveMethod(method);
@@ -120,6 +116,7 @@ namespace Tracy.Fody
             if (loggerFiled != null)
                 return GetLoggerFromField(methodDefinition, loggerFiled);
 
+            LogError("Can not find logger instance");
             return null;
         }
 
@@ -129,16 +126,15 @@ namespace Tracy.Fody
             var logMethod = FindLogMethod(methodDefinition, fieldTypeDefinition);
             if (logMethod == null)
             {
-                LogError("Can not find log method ");
+                LogError("Can not find log method");
                 return null;
             }
 
-            var accessor = new LoggerAccessor
+            return new LoggerAccessor
             {
                 LoadLogger = x => x.Add(OpCodes.Ldfld, methodDefinition.Module.Import(loggerFiled)),
                 CallLogger = x => x.Add(OpCodes.Callvirt, logMethod),
             };
-            return accessor;
         }
 
         private LoggerAccessor GetLoggerFromProperty(MethodDefinition methodDefinition, MethodDefinition loggerProperty)
@@ -147,16 +143,15 @@ namespace Tracy.Fody
             var logMethod = FindLogMethod(methodDefinition, propertyGetReturnTypeDefinition);
             if (logMethod == null)
             {
-                LogError("Can not find logger");
+                LogError("Can not find log method");
                 return null;
             }
 
-            var accessor = new LoggerAccessor
+            return new LoggerAccessor
             {
                 LoadLogger = (x) => x.AddCall(loggerProperty),
                 CallLogger = (x) => x.Add(OpCodes.Callvirt, logMethod)
             };
-            return accessor;
         }
 
         private MethodReference FindLogMethod(MethodDefinition methodDefinition, TypeDefinition loggerType)
@@ -171,7 +166,6 @@ namespace Tracy.Fody
             var loggerAccessor = FindLogger(methodDefinition);
             if (loggerAccessor == null)
             {
-                LogError("Can not find log method ");
                 return Enumerable.Empty<Instruction>();
             }
 
