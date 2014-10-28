@@ -27,6 +27,8 @@ namespace Tracy.Fody.Tests
             _sampleClass = _wavedAssembly.CreateInstance<SampleClass>();
             _loggerMock = new Mock<ILogger>();
             _sampleClass.Logger.LogInfoImpl = new Action<string>((m) => _loggerMock.Object.LogInfo(m));
+            _sampleClass.Logger.LogTraceImpl = new Action<string>((m) => _loggerMock.Object.LogTrace(m));
+            _sampleClass.Logger.LogCustomImpl = new Action<string>((m) => _loggerMock.Object.LogCustom(m));
         }
 
 #if(DEBUG)
@@ -59,6 +61,38 @@ namespace Tracy.Fody.Tests
             _sampleClass.TwoParameters(1, "wow");
 
             _loggerMock.Verify(x => x.LogInfo("Called TwoParameters with a=1, b=wow"), Times.Once);
+        }
+
+        [Test]
+        public void WithTraceLevel()
+        {
+            _sampleClass.WithTraceLevel();
+
+            _loggerMock.Verify(x => x.LogTrace("Called WithTraceLevel"), Times.Once);
+        }
+
+        [Test]
+        public void WithCustomLog()
+        {
+            _sampleClass.WithCustomLog();
+
+            _loggerMock.Verify(x => x.LogCustom("Called WithCustomLog"), Times.Once);
+        }
+
+        [Test]
+        public void Generic()
+        {
+            _sampleClass.Generic<int>(1);
+
+            _loggerMock.Verify(x => x.LogInfo("Called Generic with a=1"));
+        }
+
+        [Test]
+        public void NullParameter()
+        {
+            _sampleClass.TwoParameters(1, null);
+
+            _loggerMock.Verify(x => x.LogInfo("Called TwoParameters with a=1, b="), Times.Once);
         }
     }
 }

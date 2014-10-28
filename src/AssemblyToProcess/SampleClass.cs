@@ -1,5 +1,4 @@
-﻿using System;
-using Tracy.Fody.Attributes;
+﻿using Tracy.Fody.Attributes;
 
 namespace AssemblyToProcess
 {
@@ -23,6 +22,10 @@ namespace AssemblyToProcess
         }
 
         public void TwoParameters(int a, string b)
+        {
+        }
+
+        public void Generic<T>(int a)
         {
         }
 
