@@ -15,24 +15,37 @@ namespace AssemblyToProcess
 
     public class Logger : ILogger
     {
+        public Logger()
+        {
+            LogInfoImpl = Console.WriteLine;
+            LogTraceImpl = Console.WriteLine;
+            LogDebugImpl = Console.WriteLine;
+            LogCustomImpl = Console.WriteLine;
+        }
+
+        public Action<string> LogInfoImpl { get; set; }
+        public Action<string> LogTraceImpl { get; set; }
+        public Action<string> LogDebugImpl { get; set; }
+        public Action<string> LogCustomImpl { get; set; }
+
         public void LogInfo(string message)
         {
-            Console.WriteLine("INFO:" + message);
+            LogInfoImpl(message);
         }
 
         public void LogTrace(string message)
         {
-            Console.WriteLine("TRACE:" + message);
+            LogTraceImpl(message);
         }
 
         public void LogDebug(string message)
         {
-            Console.WriteLine("DEBUG:" + message);
+            LogDebugImpl(message);
         }
 
         public void LogCustom(string message)
         {
-            Console.WriteLine("CUSTOM:" + message);
+            LogCustomImpl(message);
         }
     }
 }

@@ -225,7 +225,7 @@ namespace Tracy.Fody
 
         private string FormatMethodParameters(MethodDefinition methodDefinition)
         {
-            return string.Join(" ",
+            return string.Join(", ",
                 methodDefinition.Parameters.Select((x, i) => string.Format("{0}={{{1}}}", x.Name, i)));
         }
 

@@ -14,16 +14,20 @@ namespace AssemblyToProcess
         public ILogger Logger { get; set; }
 
 
-        [LogCall(LogAs = LogLevel.Trace)]
         public void NoParameters()
         {
         }
 
-        public void OneParameters(int a)
+        public void OneParameter(int a)
         {
         }
 
         public void TwoParameters(int a, string b)
+        {
+        }
+
+        [LogCall(LogAs = LogLevel.Trace)]
+        public void WithTraceLevel()
         {
         }
 
